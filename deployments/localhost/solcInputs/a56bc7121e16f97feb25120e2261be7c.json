@@ -1,0 +1,35 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/MusicShop.sol": {
+      "content": "//SPDX-License-Identifier: MIT\npragma solidity ^0.8.16;\n\ncontract MusicShop {\n    struct Album {\n        uint index;\n        string uid;\n        string title;\n        uint price;\n        uint quantity;\n    }\n\n    struct Order {\n        uint orderId;\n        string albumUid;\n        address customer;\n        uint orderedAt;\n        OrderStatus status;\n    }\n\n    enum OrderStatus { Paid, Delivered }\n\n    Album[] public albums;\n    Order[] public orders;\n\n    uint public currentIndex;\n    uint public currentOrderId;\n\n    address public owner;\n\n    event AlbumBought(string indexed uid, string rawUid, address indexed customer, uint indexed timestamp);\n    event OrderDelivered(string indexed albumUid, address indexed customer);\n\n    modifier onlyOwner() {\n        require(msg.sender == owner, \"not an owner\");\n        _;\n    }\n\n    constructor() {\n        owner = msg.sender;\n    }\n\n    function addAlbum(\n        string calldata uid, \n        string calldata title,\n        uint price,\n        uint quantity\n    ) external onlyOwner {\n        albums.push(Album({\n            index: currentIndex,\n            uid: uid,\n            title: title,\n            price: price,\n            quantity: quantity\n        }));\n\n        currentIndex++;\n    }\n\n    function buy(uint _index) external payable {\n        Album storage albumToBuy = albums[_index];\n\n        require(msg.value == albumToBuy.price, \"invalid price\");\n        require(albumToBuy. quantity > 0, \"out of stock!\");\n\n        albumToBuy.quantity--;\n\n        orders.push(Order({\n            orderId: currentOrderId,\n            albumUid: albumToBuy.uid,\n            customer: msg.sender,\n            orderedAt: block.timestamp,\n            status: OrderStatus.Paid\n        }));\n\n        currentOrderId++;\n\n        emit AlbumBought(albumToBuy.uid, albumToBuy.uid, msg.sender, block.timestamp);\n    }\n\n    function delivered(uint _index) external onlyOwner {\n        Order storage cOrder = orders[_index];\n\n        require(cOrder.status != OrderStatus.Delivered, \"invalid status!\");\n\n        cOrder.status = OrderStatus.Delivered;\n\n        emit OrderDelivered(cOrder.albumUid, cOrder.customer);\n    }\n\n    receive() external payable {\n        revert(\"Please use the buy function to purchase albums!\");\n    }\n\n    function allAlbums() external view returns(Album[] memory) {\n        Album[] memory albumsList = new Album[](albums.length);\n\n        for (uint i = 0; i < albums.length; i++) {\n            albumsList[i] = albums[i];\n        }\n\n        return albumsList;\n    }\n\n}"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 2000
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}
